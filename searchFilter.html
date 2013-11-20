@@ -1,0 +1,64 @@
+﻿<div>
+    <ul class="nav nav-pills" style="margin-top: 20px;">
+        <li class="dropdown margin-text">
+            <button class="dropdown-toggle btn b-normal-font" data-toggle="dropdown" href="#" ng-disabled="isEmpty(availableItems)">
+                <span ng-bind-html-unsafe="selectedItem && selectedItem.display || '...'"></span>
+                <b class="caret"></b>
+            </button>
+            <ul class="dropdown-menu">
+                <li ng-repeat="i in availableItems">
+                    <a ng-click="select(i)" ng-bind-html-unsafe="i.display"></a>
+                </li>
+            </ul>
+        </li>
+        <li class="margin-text">
+            <span ng-show="!selectedItem.type || selectedItem.type == 'string'">
+                <input type="text" class="input-medium" ng-model="selectedItem.searchVal" />
+            </span>
+            <span ng-show="selectedItem.type == 'date'">
+                <span class="badge badge-info">from</span>
+                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._from" />
+                <span class="badge badge-info">to</span>
+                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._to" />
+            </span>
+            <span ng-show="selectedItem.type == 'dropdown'">
+                <div class="dropdown">
+                    <button class="dropdown-toggle btn" data-toggle="dropdown" href="#">
+                        {{selectedItem.displayVal && selectedItem.displayVal || '...'}}
+                    <b class="caret"></b>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li ng-repeat="(key,val) in selectedItem.values">
+                            <a ng-click="selectedItem.searchVal = val; selectedItem.displayVal = key;">{{key}}</a>
+                        </li>
+                    </ul>
+                </div>
+            </span>
+        </li>
+        <li ng-show="authService.user.role > authService.userRoles.admin">
+            <span ng-show="selectedItem.type != 'date'">
+                <span class="label label-success margin-text">{{selectedItem && selectedItem.name || '?????'}}&nbsp;=&nbsp;{{selectedItem.searchVal && selectedItem.searchVal || '?????'}}</span>
+            </span>
+            <span ng-show="selectedItem.type == 'date'">
+                <span class="label label-success margin-text">{{selectedItem && selectedItem.name || '?????'}}&nbsp;=&nbsp;{{selectedItem.searchVal && selectedItem.searchVal._from + ' - ' + selectedItem.searchVal._to || '?????'}}</span>
+            </span>
+        </li>
+        <li class="margin-text">
+            <button class="btn" ng-click="addFilter()" ng-disabled="!selectedItem.name || !selectedItem.searchVal">
+                <i class="icon-plus"></i>
+            </button>
+        </li>
+    </ul>
+    <table class="table table-striped table-bordered table-hover" style="width: 500px;" ng-hide="isEmpty(wrapFilter)">
+        <tr ng-repeat="f in wrapFilter">
+            <td style="width: 240px;">{{f.name}}</td>
+            <td style="width: 240px;">{{displayValue(f.searchVal)}}</td>
+            <td style="width: 20px;">
+                <button class="btn btn-link" ng-click="removeFilterItem(f)" title="Delete" ng-disabled="!isLast(f, wrapFilter)">
+                    <i class="icon-remove"></i>
+                </button>
+            </td>
+        </tr>
+    </table>
+    <a class="btn" ng-click="doSearch()">Search</a>
+</div>
