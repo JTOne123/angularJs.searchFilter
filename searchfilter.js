@@ -24,11 +24,12 @@
                 scope.select = function (selectedItem) {
                     scope.selectedItem = selectedItem;
 
-                    $q.when(selectedItem.values).then(function (values) {
-                        var key = _.keys(values)[0];
-                        scope.selectedItem.searchVal = values[key];
-                        scope.selectedItem.displayVal = key;
-                    });
+                    if (scope.selectedItem.values)
+                        $q.when(scope.selectedItem.values).then(function (values) {
+                            var key = _.keys(values)[0];
+                            scope.selectedItem.searchVal = values[key];
+                            scope.selectedItem.displayVal = key;
+                        });
                 };
 
                 scope.removeFilterItem = function (f) {
