@@ -9,7 +9,7 @@ How to use:
 
 Html:
 <pre><code>
-	<searchfilter items="filterItems" init-filter="initFilter" search-action="doSearch" />    
+	&lt;searchfilter items="filterItems" init-filter="initFilter" search-action="doSearch" /&gt;
 </code></pre>
 
 Controller:
