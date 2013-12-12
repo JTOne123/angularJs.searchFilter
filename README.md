@@ -1,7 +1,7 @@
 angularJs.searchFilter
 ======================
 
-Easy (add new item) filter
+Server-side filter for angular.js apps, with preview of selected items
 
 ![alt tag](https://raw.github.com/JTOne123/angularJs.searchFilter/master/searchFilter.png)
 

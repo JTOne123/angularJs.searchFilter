@@ -1,6 +1,6 @@
 ﻿angular
     .module('gdnui')
-    .directive('searchfilter', function ($compile, $timeout, $q, config, AuthService) {
+    .directive('searchfilter', function ($compile, $timeout, $q, config) {
         return {
             restrict: 'E',
             replace: true,
@@ -25,11 +25,12 @@
                     scope.selectedItem = selectedItem;
 
                     if (scope.selectedItem.values)
-                        $q.when(scope.selectedItem.values).then(function (values) {
-                            var key = _.keys(values)[0];
-                            scope.selectedItem.searchVal = values[key];
-                            scope.selectedItem.displayVal = key;
-                        });
+                        $q.when(scope.selectedItem.values)
+                          .then(function (values) {
+                              var key = _.keys(values)[0];
+                              scope.selectedItem.searchVal = values[key];
+                              scope.selectedItem.displayVal = key;
+                          });
                 };
 
                 scope.removeFilterItem = function (f) {
@@ -46,7 +47,26 @@
                     return _.isEqual(obj, l);
                 };
 
-                scope.displayValue = function (val) {
+                scope.displayValueResult = {};
+                scope.displayValue = function (beenSelectedItem) {
+                    if (!scope.displayValueResult[beenSelectedItem.name]) {
+                        $q.when(beenSelectedItem.values)
+                           .then(function (values) {
+                               _.find(values, function (val, key) {
+                                   if (_.isEqual(val, beenSelectedItem.searchVal)) {
+                                       scope.displayValueResult[beenSelectedItem.name] = key;
+                                       return true;
+                                   }
+                               });
+
+                               if (!scope.displayValueResult[beenSelectedItem.name])
+                                   scope.displayValueResult[beenSelectedItem.name] = scope.displaySpecialValue(beenSelectedItem.searchVal);
+                           });
+                    }
+                    return scope.displayValueResult[beenSelectedItem.name];
+                };
+
+                scope.displaySpecialValue = function (val) {
                     if (_.isObject(val)) {
                         var result = '';
 
@@ -65,6 +85,16 @@
                     }
                 };
 
+                scope.changeFilter = function (beenSelectedItem, key, val) {
+                    if (val)
+                        beenSelectedItem.searchVal = val;
+                    if (key)
+                        beenSelectedItem.displayVal = key;
+
+                    scope.displayValueResult[beenSelectedItem.name] = null;
+                    scope.filter[beenSelectedItem.name] = beenSelectedItem.searchVal;
+                };
+
                 scope.doSearch = function () {
                     if (scope.selectedItem && scope.selectedItem.name && scope.selectedItem.searchVal)
                         scope.addFilter();
@@ -72,36 +102,35 @@
                     scope.searchAction && (scope.searchAction())(scope.filter);
                 };
 
+                scope.initDatePicker = function (element) {
+                    element
+                    .datepicker({ format: config.dateFormat })
+                    .on('changeDate', function (ev) {
+                        var model = angular.element(ev.target).attr('ng-model');
+                        var splitedModel = model.split('.');
+
+                        var selectedDate = ev.date;
+                        if (splitedModel[splitedModel.length - 1] == '_to')
+                            selectedDate = new Date(selectedDate.setSeconds(24 * 60 * 60 - 1));
+
+                        splitedModel[splitedModel.length - 1] = '_$specialValue' + splitedModel[splitedModel.length - 1];
+                        var specialModel = splitedModel.join('.');
+
+                        scope.$eval(
+                            model + '="' + angular.element(ev.target).val() + '";' +
+                            specialModel + '="' + selectedDate.toISOString() + '";'
+                        );
+
+                        scope.$digest();
+                    });
+                };
+
                 scope.init = function () {
                     scope.availableItems = scope.items;
                     scope.wrapFilter = {};
-                    scope.authService = AuthService;
 
                     if (scope.availableItems.length > 0)
                         scope.select(scope.availableItems[0]);
-
-                    angular
-                        .element('.datePicker')
-                        .datepicker({ format: config.dateFormat })
-                        .on('changeDate', function (ev) {
-
-                            var model = angular.element(ev.target).attr('ng-model');
-                            var splitedModel = model.split('.');
-
-                            var selectedDate = ev.date;
-                            if (splitedModel[splitedModel.length - 1] == '_to')
-                                selectedDate = new Date(selectedDate.setSeconds(24 * 60 * 60 - 1));
-
-                            splitedModel[splitedModel.length - 1] = '_$specialValue' + splitedModel[splitedModel.length - 1];
-                            var specialModel = splitedModel.join('.');
-
-                            scope.$eval(
-                                model + '="' + angular.element(ev.target).val() + '";' +
-                                specialModel + '="' + selectedDate.toISOString() + '";'
-                            );
-
-                            scope.$digest();
-                        });
 
                     if (scope.initFilter) {
                         _.each(scope.initFilter, function (val, key) {
@@ -118,7 +147,7 @@
                     }
                 };
 
-                $timeout(function () {
+                $timeout(function() {
                     scope.init();
                 });
             }
