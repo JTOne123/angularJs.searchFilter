@@ -2,12 +2,12 @@
     <ul class="nav nav-pills" style="margin-top: 20px;">
         <li class="dropdown margin-text">
             <button class="dropdown-toggle btn b-normal-font" data-toggle="dropdown" href="#" ng-disabled="isEmpty(availableItems)">
-                <span ng-bind-html-unsafe="selectedItem && selectedItem.display || '...'"></span>
+                <span>{{selectedItem ? selectedItem.display : '...'}}</span>
                 <b class="caret"></b>
             </button>
             <ul class="dropdown-menu">
                 <li ng-repeat="i in availableItems">
-                    <a ng-click="select(i)" ng-bind-html-unsafe="i.display"></a>
+                    <a ng-click="select(i)">{{i.display}}</a>
                 </li>
             </ul>
         </li>
@@ -17,9 +17,9 @@
             </span>
             <span ng-show="selectedItem.type == 'date'">
                 <span class="badge badge-info">from</span>
-                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._from" />
+                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._from" on-element-ready="initDatePicker"/>
                 <span class="badge badge-info">to</span>
-                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._to" />
+                <input type="text" class="input-medium datePicker" ng-model="selectedItem.searchVal._to" on-element-ready="initDatePicker"/>
             </span>
             <span ng-show="selectedItem.type == 'dropdown'">
                 <div class="dropdown">
@@ -35,26 +35,41 @@
                 </div>
             </span>
         </li>
-        <li ng-show="authService.user.role > authService.userRoles.admin">
-            <span ng-show="selectedItem.type != 'date'">
-                <span class="label label-success margin-text">{{selectedItem && selectedItem.name || '?????'}}&nbsp;=&nbsp;{{selectedItem.searchVal && selectedItem.searchVal || '?????'}}</span>
-            </span>
-            <span ng-show="selectedItem.type == 'date'">
-                <span class="label label-success margin-text">{{selectedItem && selectedItem.name || '?????'}}&nbsp;=&nbsp;{{selectedItem.searchVal && selectedItem.searchVal._from + ' - ' + selectedItem.searchVal._to || '?????'}}</span>
-            </span>
-        </li>
         <li class="margin-text">
-            <button class="btn" ng-click="addFilter()" ng-disabled="!selectedItem.name || !selectedItem.searchVal">
+            <button class="btn" ng-click="addFilter(selectedItem);" ng-disabled="!selectedItem.name || !selectedItem.searchVal">
                 <i class="icon-plus"></i>
             </button>
         </li>
     </ul>
-    <table class="table table-striped table-bordered table-hover" style="width: 500px;" ng-hide="isEmpty(wrapFilter)">
-        <tr ng-repeat="f in wrapFilter">
-            <td style="width: 240px;">{{f.name}}</td>
-            <td style="width: 240px;">{{displayValue(f.searchVal)}}</td>
+    <table class="table table-striped table-bordered table-hover" style="width: 500px;" ng-hide="isEmpty(renderFilter)">
+        <tr ng-repeat="beenSelectedItem in renderFilter">
+            <td style="width: 240px;">{{beenSelectedItem.display}}</td>
+            <td style="width: 240px;">
+                <span ng-show="!beenSelectedItem.type || beenSelectedItem.type == 'string'">
+                    <input type="text" class="input-medium" ng-model="beenSelectedItem.searchVal" ng-change="changeFilter(beenSelectedItem)" />
+                </span>
+                <span ng-show="beenSelectedItem.type == 'date'">
+                    <span class="badge badge-info">from</span>
+                    <input type="text" class="input-medium datePicker" ng-model="beenSelectedItem.searchVal._from" ng-change="changeFilter(beenSelectedItem)" on-element-ready="initDatePicker"/>
+                    <span class="badge badge-info">to</span>
+                    <input type="text" class="input-medium datePicker" ng-model="beenSelectedItem.searchVal._to" ng-change="changeFilter(beenSelectedItem)" on-element-ready="initDatePicker"/>
+                </span>
+                <span ng-show="beenSelectedItem.type == 'dropdown'">
+                    <div class="dropdown">
+                        <button class="dropdown-toggle btn" data-toggle="dropdown" href="#">
+                            {{displayValue(beenSelectedItem)}}
+                            <b class="caret"></b>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li ng-repeat="(key,val) in beenSelectedItem.values">
+                                <a ng-click="changeFilter(beenSelectedItem, key, val)">{{key}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </span>
+            </td>
             <td style="width: 20px;">
-                <button class="btn btn-link" ng-click="removeFilterItem(f)" title="Delete" ng-disabled="!isLast(f, wrapFilter)">
+                <button class="btn btn-link" ng-click="removeFilterItem(beenSelectedItem)" title="Delete">
                     <i class="icon-remove"></i>
                 </button>
             </td>

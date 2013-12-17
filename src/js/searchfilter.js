@@ -14,28 +14,35 @@
             templateUrl: 'templates/components/searchFilter.html',
             link: function (scope, element, attrs) {
                 scope.filter = {};
+                scope.renderFilter = {};
 
                 scope.addFilter = function () {
                     scope.filter[scope.selectedItem.name] = scope.selectedItem.searchVal;
-                    scope.wrapFilter[scope.selectedItem.name] = scope.selectedItem;
+                    scope.renderFilter[scope.selectedItem.name] = scope.selectedItem;
                     scope.selectedItem = null;
+                };
+
+                scope.when = function (val, callback) {
+                    if (val && val.then)
+                        val.then(callback);
+                    else
+                        callback(val);
                 };
 
                 scope.select = function (selectedItem) {
                     scope.selectedItem = selectedItem;
 
                     if (scope.selectedItem.values)
-                        $q.when(scope.selectedItem.values)
-                          .then(function (values) {
-                              var key = _.keys(values)[0];
-                              scope.selectedItem.searchVal = values[key];
-                              scope.selectedItem.displayVal = key;
-                          });
+                        scope.when(scope.selectedItem.values, function (values) {
+                            var key = _.keys(values)[0];
+                            scope.selectedItem.searchVal = values[key];
+                            scope.selectedItem.displayVal = key;
+                        });
                 };
 
                 scope.removeFilterItem = function (f) {
                     delete scope.filter[f.name];
-                    delete scope.wrapFilter[f.name];
+                    delete scope.renderFilter[f.name];
                 };
 
                 scope.isEmpty = function (obj) {
@@ -50,18 +57,17 @@
                 scope.displayValueResult = {};
                 scope.displayValue = function (beenSelectedItem) {
                     if (!scope.displayValueResult[beenSelectedItem.name]) {
-                        $q.when(beenSelectedItem.values)
-                           .then(function (values) {
-                               _.find(values, function (val, key) {
-                                   if (_.isEqual(val, beenSelectedItem.searchVal)) {
-                                       scope.displayValueResult[beenSelectedItem.name] = key;
-                                       return true;
-                                   }
-                               });
+                        scope.when(beenSelectedItem.values, function (values) {
+                            _.find(values, function (val, key) {
+                                if (_.isEqual(val, beenSelectedItem.searchVal)) {
+                                    scope.displayValueResult[beenSelectedItem.name] = key;
+                                    return true;
+                                }
+                            });
 
-                               if (!scope.displayValueResult[beenSelectedItem.name])
-                                   scope.displayValueResult[beenSelectedItem.name] = scope.displaySpecialValue(beenSelectedItem.searchVal);
-                           });
+                            if (!scope.displayValueResult[beenSelectedItem.name])
+                                scope.displayValueResult[beenSelectedItem.name] = scope.displaySpecialValue(beenSelectedItem.searchVal);
+                        });
                     }
                     return scope.displayValueResult[beenSelectedItem.name];
                 };
@@ -127,7 +133,6 @@
 
                 scope.init = function () {
                     scope.availableItems = scope.items;
-                    scope.wrapFilter = {};
 
                     if (scope.availableItems.length > 0)
                         scope.select(scope.availableItems[0]);
@@ -147,9 +152,7 @@
                     }
                 };
 
-                $timeout(function() {
-                    scope.init();
-                });
+                scope.init();
             }
         };
     });
